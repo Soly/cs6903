@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <vector>
 #include <time.h>
@@ -19,6 +20,7 @@ string decrypt(vector<int> &ct, map<char, vector<int>> &key);
 void delimit_ciphertext(string ct, vector<int> &ct_nums);
 void index_dict(const string &path, set<string> &dict);
 void print_freqs(const vector<int> &cipher_text);
+vector<int> encode(string s);
 
 const vector<string> plaintexts = {
   "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping "
@@ -70,7 +72,17 @@ int main()
 
   // encrypt(message, cipher_text, key);
   // cout << decrypt(cipher_text, key) << endl;
-	return 0;
+  unordered_map<vector<int>, vector<string> > encodings;
+  for(auto i = dict.begin(); i != dict.end(); i++) {
+    vector<int> e = encode(*i);
+    encodings[e].push_back(*i);
+  }
+  for(auto i = encodings.begin(), j = advance(encodings.begin() , 10); i != j; i++) {
+    for(int k : i->first) cout << k << " ";
+    cout << ": ";
+    for(string s : i->second) cout << s << ", ";
+    cout << endl;
+  }
 }
 
 void create_key(map<char, vector<int>> &key)
@@ -189,3 +201,20 @@ void print_freqs(const vector<int> &cipher_text)
   for(int i = 0; i < freqs.size(); i++) cout << freqs[i].first << ": " << freqs[i].second << endl;
 }
 
+vector<int> encode(string s)
+{
+  // seen keeps track of letters we saw already and what we mapped them to
+  // 0..25 maps to a..z
+  vector<int> encoding;
+  vector<int> seen(26, -1);
+  int mapping = 0;
+  for(int i = 0; i < s.size(); i++) {
+    if(seen[s[i]-'a'] < 0) {
+      seen[s[i]-'a'] = mapping;
+      encoding.push_back(mapping);
+      mapping++;
+    }
+    else encoding.push_back(seen[s[i]-'a']);
+  }
+  return encoding;
+}
