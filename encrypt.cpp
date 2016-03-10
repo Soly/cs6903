@@ -11,6 +11,68 @@
 #include <utility>
 using namespace std;
 
+void create_key(map<char, vector<int>> &key);
+void print_key(map<char, vector<int>> &key);
+void print_ciphertext(vector<int> &cipher_text);
+void encrypt(string &pt, vector<int> &ct, map<char, vector<int>> &key);
+string decrypt(vector<int> &ct, map<char, vector<int>> &key);
+void delimit_ciphertext(string ct, vector<int> &ct_nums);
+void index_dict(const string &path, set<string> &dict);
+void print_freqs(const vector<int> &cipher_text);
+
+const vector<string> plaintexts = {
+  "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping "
+  "underbidding nightshirts colly editorializer trembler unresistant resins anthrax "
+  "polypus research parapets gratuitous corespondent pyrometer breveted psychoneurosis "
+  "scoutings almightily endoscopes cyanosis kayaker hake william blunted incompressibility "
+  "lacer cumquat aniline agileness academe obstacle toothpick nondistribution rebukes concertizes "
+  "industrialist plenipotentiary swagmen kevils dredge ostensible atavistic p",
+
+  "revelation revering rightest impersonalize juliennes scientists reemphasizing "
+  "propose crony bald pampering discharged lincoln authoresses interacted laked "
+  "bedmaker intolerably beltlines warningly worldliness serologic bottom guessed "
+  "hangup vitiates snaky polypous manifolding sweatshirt divisiveness decapitation "
+  "musketry versers pizzas aperies reorganizes fender presentations thereuntil fly "
+  "entrapped causewayed shaped freemasonry nudging efflorescence hydrated zazen exegeses fracas unprogressivel",
+
+  "boca ingestion financed indexer generalships boldfaces boughed tesla videotext "
+  "expiation brasil kinglets duality rattlesnakes mailability valvelet whimperingly "
+  "corralled stench fatal inapplicably uncourageous bubblers req jesse foetor bulgaria "
+  "hueless pickwicks intrans gargles purgations subvarieties pettier caste decongestive "
+  "replanned continual bribed pirog learning currier careers rustling swankily onetime "
+  "prearranges stowage responder inwrapped coign concubines gyrus delta tripled sleetier m",
+
+  "allocated demonstration cocoanuts imprecisions mikado skewer ennobled cathect universalizes "
+  "lucidity soldierly calor narthexes jiggling mutinousness relight mistook electra ogles chirk "
+  "unsympathetic indorsed theomania gaper moths aerospace riboflavin sensorium teariest luckiest "
+  "dither subparts purslane gloam dictatory conversed confides medullary fatsos barked yank chained "
+  "changes magicians movables ravenousness dipsomaniac budded windjammers stayers dixie tepidities desexualization boodled dile",
+
+  "shellackers ballets unselfishly meditatively titaness highballed serenaders ramshorns "
+  "bottlenecks clipsheet unscriptural empoisoned flocking kantians ostensibilities heigh "
+  "hydrodynamics qualifier million unlading distributed crinkliest conte germ certifier weaklings "
+  "nickeled watson cutis prenticed debauchery variously puccini burgess landfalls nonsecular "
+  "manipulability easterlies encirclements nescient imperceptive dentally sudsers reediness "
+  "polemical honeybun bedrock anklebones brothering narks"
+};
+
+int main()
+{
+	string message;
+	vector<int> cipher_text;
+	map<char, vector<int>> key;
+  set<string> dict;
+
+	srand(time(NULL));
+	create_key(key);
+  index_dict("english_words.txt", dict);
+  cout << "There are " << dict.size() << " words in the dictionary" << endl;
+
+  // encrypt(message, cipher_text, key);
+  // cout << decrypt(cipher_text, key) << endl;
+	return 0;
+}
+
 void create_key(map<char, vector<int>> &key)
 {
   static string letters = "abcdefghijklmnopqrstuvwxyz";
@@ -32,34 +94,44 @@ void create_key(map<char, vector<int>> &key)
   }
 }
 
-
-//Print out key
-void print_key(map<char, vector<int>> &key) {
-	for (auto i : key)
-	{
+// Print out key
+void print_key(map<char, vector<int>> &key)
+{
+	for (auto i : key) {
 		cout << i.first << ": ";
 		for (int j : i.second) cout << j << " ";
 		cout << endl;
 	}
 }
 
-void encrypt(string &pt, vector<int> &ct, map<char, vector<int>> &key) {
-  int string_counter = 0;
-  for (char c : pt)
-    {
-      if (isspace(c)) ct.push_back(-1);
-      else
-        {
-          vector<int> temp = key.find(c)->second;
+void print_ciphertext(vector<int> &cipher_text)
+{
+  for (int i = 0; i < cipher_text.size(); i++) {
+    if (cipher_text[i] != -1) {
+			cout << cipher_text[i];
+      if (i != cipher_text.size() - 1 && cipher_text[i+1] != -1) cout << ",";
+    }
+		else cout << " ";
+  }
+	cout << endl;
+}
 
-          // This is the scheduling algo
-          ct.push_back(temp[string_counter % temp.size()]);
-        }
+void encrypt(string &pt, vector<int> &ct, map<char, vector<int>> &key)
+{
+  int string_counter = 0;
+  for (char c : pt) {
+      if (isspace(c)) ct.push_back(-1);
+      else {
+        vector<int> temp = key.find(c)->second;
+        // This is the scheduling algo
+        ct.push_back(temp[string_counter % temp.size()]);
+      }
       string_counter++;
     }
 }
 
-string decrypt(vector<int> &ct, map<char, vector<int>> &key) {
+string decrypt(vector<int> &ct, map<char, vector<int>> &key)
+{
   vector<char> rkey(102);
   for(char i = 'a'; i <= 'z'; i++) {
     vector<int> curr = key.find(i)->second;
@@ -82,19 +154,18 @@ void delimit_ciphertext(string ct, vector<int> &ct_nums)
 {
 	istringstream ss(ct);
 	string word;
-	while(getline(ss, word, ' '))
-    {
-      istringstream ss_token(word);
-      string character;
-      while (getline(ss_token, character, ','))
-        {
-          ct_nums.push_back(stoi(character));
-        }
-      if (!ss.eof()) ct_nums.push_back(-1);
+	while(getline(ss, word, ' ')) {
+    istringstream ss_token(word);
+    string character;
+    while (getline(ss_token, character, ',')) {
+      ct_nums.push_back(stoi(character));
     }
+    if (!ss.eof()) ct_nums.push_back(-1);
+  }
 }
 
-void index(const string &path, set<string> &dict) {
+void index_dict(const string &path, set<string> &dict)
+{
   ifstream ifs(path);
   if(!ifs) {
     cerr << "Error opening " << path << endl;
@@ -104,45 +175,8 @@ void index(const string &path, set<string> &dict) {
   while(getline(ifs, line)) dict.insert(line);
 }
 
-int main()
+void print_freqs(const vector<int> &cipher_text)
 {
-	string message;
-	vector<int> cipher_text;
-	map<char, vector<int>> key;
-	srand(time(NULL));
-	create_key(key);
-  // print_key(key);
-  // cout << "Provide a message: ";
-  // getline(cin, message);
-  // delimit_ciphertext(message, cipher_text);
-
-  cout << "Top 10 words" << endl;
- set<string> dict;
-  index("english_words.txt", dict);
-  for(auto i = dict.begin(), j = next(dict.begin(), 10); i != j; i++) {
-    cout << *i << endl;
-  }
-  cout << "There are " << dict.size() << " words in the dictionary" << endl;
-
-
-
-
-
-  /*
-   message = "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping underbidding nightshirts colly editorializer trembler unresistant resins anthrax polypus research parapets gratuitous corespondent pyrometer breveted psychoneurosis scoutings almightily endoscopes cyanosis kayaker hake william blunted incompressibility lacer cumquat aniline agileness academe obstacle toothpick nondistribution rebukes concertizes industrialist plenipotentiary swagmen kevils dredge ostensible atavistic p";
-   // encrypt(message, cipher_text, key);
-  for (int i = 0; i < cipher_text.size(); i++)
-	{
-    if (cipher_text[i] != -1)
-		{
-			cout << cipher_text[i];
-      if (i != cipher_text.size() - 1 && cipher_text[i+1] != -1) cout << ",";
-    }
-		else cout << " ";
-  }
-
-	cout << endl;
-
   vector<pair<int, int> > freqs(103);
   for(int i = 0; i < freqs.size(); i++) {
     freqs[i].first = i;
@@ -151,10 +185,7 @@ int main()
   for(int i = 0; i < cipher_text.size(); i++) {
     if(cipher_text[i] > 0) freqs[cipher_text[i]].second++;
   }
-
   sort(freqs.begin(), freqs.end(), [](pair<int,int> x, pair<int, int> y){return x.second > y.second;});
   for(int i = 0; i < freqs.size(); i++) cout << freqs[i].first << ": " << freqs[i].second << endl;
-  */
-  // cout << decrypt(cipher_text, key) << endl;
-	return 0;
 }
+
