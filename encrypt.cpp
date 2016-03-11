@@ -10,10 +10,12 @@
 #include <ctype.h>
 #include <algorithm>
 #include <utility>
+#include <tuple>
 
 #include "trie.cpp"
 using namespace std;
 
+void sort_ciphertext(string ct, vector<vector<pair<string, int>>> &ct_sorted);
 void create_key(map<char, vector<int>> &key);
 void print_key(map<char, vector<int>> &key);
 void print_ciphertext(vector<int> &cipher_text);
@@ -65,33 +67,63 @@ int main()
     string message;
     vector<int> cipher_text;
     map<char, vector<int>> key;
-    set<string> dict;
-    vector<vector<string>> words;
+    //set<string> dict;
+    vector<vector<string>> words(28);
 
     srand(time(NULL));
     create_key(key);
 
+	/*
     index_dict("english_words.txt", dict);
     cout << "There are " << dict.size() << " words in the dictionary" << endl;
     sort_dict("english_words.txt", words);
-
+    */
+    
+    /*
     vector<Trie> tries(words.size());
     for(int i = 0; i < tries.size(); i++) {
         for(int j = 0; j < words[i].size(); j++) {
             tries[i].addWord(words[i][j]);
         }
     }
+    */
 
+    /*
+     * sort_dict test code
+    string string_dict = "english_words.txt";
+    sort_dict(string_dict, words);
+    for (auto i: words) for (auto j : i) cout << j << endl;
+    */
 
+    /*
+    message = plaintexts[0];
+    encrypt(message, cipher_text, key);
+    cout << decrypt(cipher_text, key) << endl;
+    print_ciphertext(cipher_text);
+    */
+    
+    /*
+     * sort_ciphertext test code
+    vector<vector<pair<string, int>>> ct_sorted(28);
+    string cipher_text_2;
+    cout << "Enter ciphertext: " << endl;
+    getline(cin, cipher_text_2);
+    sort_ciphertext(cipher_text_2, ct_sorted);
+    */
+}
 
-    // sort_dict test code
-    //vector<vector<string>> words(28);
-    //string dict = "english_words.txt";
-    //sort_dict(words, dict);
-
-    // message = plaintexts[0];
-    // encrypt(message, cipher_text, key);
-    // cout << decrypt(cipher_text, key) << endl;
+void sort_ciphertext(string ct, vector<vector<pair<string, int>>> &ct_sorted)
+{
+	int line_counter = 0;
+	stringstream ss(ct);
+	string line;
+	while (getline(ss, line, ' ')) 
+	{
+		pair<string, int> word(line, line_counter);
+		ct_sorted[count(line.begin(), line.end(), ',') + 1].push_back(word);
+		line_counter++;
+	}
+	reverse(ct_sorted.begin(), ct_sorted.end());
 }
 
 void create_key(map<char, vector<int>> &key)
