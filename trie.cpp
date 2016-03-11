@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <fstream>
 using namespace std;
 
 class Node {
@@ -113,6 +114,16 @@ bool Trie::searchWord(string s)
 int main()
 {
     Trie* trie = new Trie();
+	ifstream ifs("english_words.txt");
+	string line;
+	
+	while (getline(ifs, line)) trie->addWord(line);
+	
+	if ( trie->searchWord("reports") )
+        cout << "Found it" << endl;
+    else
+		cout << "Failure" << endl;
+    /*
     trie->addWord("Hello");
     trie->addWord("Balloon");
     trie->addWord("Ball");
@@ -131,6 +142,7 @@ int main()
 
     if ( trie->searchWord("Balloon") )
         cout << "Found Balloon" << endl;
+	*/
 
     delete trie;
 }
