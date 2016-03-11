@@ -10,6 +10,8 @@
 #include <ctype.h>
 #include <algorithm>
 #include <utility>
+
+#include "trie.cpp"
 using namespace std;
 
 void create_key(map<char, vector<int>> &key);
@@ -20,9 +22,6 @@ string decrypt(vector<int> &ct, map<char, vector<int>> &key);
 void delimit_ciphertext(string &ct, vector<int> &ct_nums);
 void index_dict(const string &path, set<string> &dict);
 void print_freqs(const vector<int> &cipher_text);
-vector<int> encode(const string &s);
-vector<int> encode(const vector<int> &s);
-vector<int> encode(vector<int>::iterator start, vector<int>::iterator end);
 
 const vector<string> plaintexts = {
     "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping "
@@ -73,33 +72,9 @@ int main()
     index_dict("english_words.txt", dict);
     cout << "There are " << dict.size() << " words in the dictionary" << endl;
 
-    message = "aardvark";
-    encrypt(message, cipher_text, key);
+    // message = plaintexts[0];
+    // encrypt(message, cipher_text, key);
     // cout << decrypt(cipher_text, key) << endl;
-    //unordered_map<vector<int>, vector<string> > encodings;
-    map<vector<int>, vector<string> > encodings;
-    for(auto i = dict.begin(); i != dict.end(); i++) {
-        vector<int> e = encode(*i);
-        encodings[e].push_back(*i);
-    }
-
-    vector<int> ct_encode = encode(cipher_text.begin(), cipher_text.end());
-    for(auto i = ct_encode.begin(); i != ct_encode.end(); i++) cout << *i << ',';
-    cout << endl;
-
-    vector<string> result = encodings[ct_encode];
-    for(auto i = result.begin(); i != result.end(); i++) {
-        cout << *i << endl;
-    }
-
-    /*
-    for(auto i = encodings.begin(), j = next(i, 10); i != j; i++) {
-        for(int k : i->first) cout << k << " ";
-        cout << ": ";
-        for(string s : i->second) cout << s << ", ";
-        cout << endl;
-    }
-    */
 }
 
 void create_key(map<char, vector<int>> &key)
@@ -218,52 +193,3 @@ void print_freqs(const vector<int> &cipher_text)
     for(int i = 0; i < freqs.size(); i++) cout << freqs[i].first << ": " << freqs[i].second << endl;
 }
 
-vector<int> encode(const string &s)
-{
-    // seen keeps track of letters we saw already and what we mapped them to
-    // 0..25 maps to a..z
-    vector<int> encoding;
-    vector<int> seen(26, -1);
-    int mapping = 0;
-    for(int i = 0; i < s.size(); i++) {
-        if(seen[s[i]-'a'] < 0) {
-            seen[s[i]-'a'] = mapping;
-            encoding.push_back(mapping);
-            mapping++;
-        }
-        else encoding.push_back(seen[s[i]-'a']);
-    }
-    return encoding;
-}
-
-vector<int> encode(const vector<int> &s)
-{
-    vector<int> encoding;
-    vector<int> seen(103, -1);
-    int mapping = 0;
-    for(int i = 0; i < s.size(); i++) {
-        if(seen[s[i]] < 0) {
-            seen[s[i]] = mapping;
-            encoding.push_back(mapping);
-            mapping++;
-        }
-        else encoding.push_back(seen[s[i]]);
-    }
-    return encoding;
-}
-
-vector<int> encode(vector<int>::iterator start, vector<int>::iterator end)
-{
-    vector<int> encoding;
-    vector<int> seen(103, -1);
-    int mapping = 0;
-    for(auto i = start; i != end; i++) {
-        if(seen[*i] < 0) {
-            seen[*i] = mapping;
-            encoding.push_back(mapping);
-            mapping++;
-        }
-        else encoding.push_back(seen[*i]);
-    }
-    return encoding;
-}
