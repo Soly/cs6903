@@ -25,6 +25,8 @@ void delimit_ciphertext(string &ct, vector<int> &ct_nums);
 void index_dict(const string &path, set<string> &dict);
 void print_freqs(const vector<int> &cipher_text);
 void sort_dict(const string &dict, vector<vector<string>> &words);
+void print_vec(const vector<int> &vec);
+void string_to_vector(string ct_string, vector<int> &ct_vec);
 
 const vector<string> plaintexts = {
     "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping "
@@ -67,26 +69,59 @@ int main()
     string message;
     vector<int> cipher_text;
     map<char, vector<int>> key;
-    //set<string> dict;
+    set<string> dict;
     vector<vector<string>> words(28);
 
     srand(time(NULL));
     create_key(key);
 
-	/*
+    vector<int> key_guess(103, -1);
+
+
     index_dict("english_words.txt", dict);
     cout << "There are " << dict.size() << " words in the dictionary" << endl;
     sort_dict("english_words.txt", words);
-    */
-    
-    /*
+
+    vector<vector<pair<string, int>>> ct_sorted(28);
+    string cipher_text_2;
+    cout << "Enter ciphertext: " << endl;
+    getline(cin, cipher_text_2);
+    sort_ciphertext(cipher_text_2, ct_sorted);
+
     vector<Trie> tries(words.size());
     for(int i = 0; i < tries.size(); i++) {
         for(int j = 0; j < words[i].size(); j++) {
             tries[i].addWord(words[i][j]);
         }
     }
-    */
+
+    auto curr_len = ct_sorted.begin();
+    while(curr_len->size() == 0) curr_len++;
+    vector<int> curr_word;
+    string_to_vector((curr_len->begin())->first, curr_word);
+    auto curr_guess = words[curr_word.size()].begin();
+
+    static int freqs[] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
+    static int offsets[] = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
+    bool sat = false;
+    for(int i = 0; i < curr_guess->size(); i++) {
+      char c = (*curr_guess)[i];
+      int index = c - 97;
+      int off = offsets[index];
+      while(key_guess[off] >= 0 && off < 103 && off < offsets[index+1]) off++;
+      if(key_guess[off] >= 0) {
+        sat = true;
+        break;
+      }
+      key_guess[off] = curr_word[i];
+    }
+
+    print_vec(curr_word);
+    cout << endl;
+    cout << *curr_guess << endl;
+    print_vec(key_guess);
+    cout << endl;
+
 
     /*
      * sort_dict test code
@@ -101,15 +136,22 @@ int main()
     cout << decrypt(cipher_text, key) << endl;
     print_ciphertext(cipher_text);
     */
-    
-    /*
-     * sort_ciphertext test code
-    vector<vector<pair<string, int>>> ct_sorted(28);
-    string cipher_text_2;
-    cout << "Enter ciphertext: " << endl;
-    getline(cin, cipher_text_2);
-    sort_ciphertext(cipher_text_2, ct_sorted);
-    */
+
+
+}
+
+void print_vec(const vector<int> &vec)
+{
+  for(auto i = vec.begin(); i != vec.end(); i++) cout << *i << ',';
+}
+
+void string_to_vector(string ct_string, vector<int> &ct_vec) {
+	string letter;
+	stringstream ss(ct_string);
+
+	while (getline(ss, letter, ',')) {
+		ct_vec.push_back(stoi(letter));
+	}
 }
 
 void sort_ciphertext(string ct, vector<vector<pair<string, int>>> &ct_sorted)
@@ -117,8 +159,7 @@ void sort_ciphertext(string ct, vector<vector<pair<string, int>>> &ct_sorted)
 	int line_counter = 0;
 	stringstream ss(ct);
 	string line;
-	while (getline(ss, line, ' ')) 
-	{
+	while (getline(ss, line, ' ')) {
 		pair<string, int> word(line, line_counter);
 		ct_sorted[count(line.begin(), line.end(), ',') + 1].push_back(word);
 		line_counter++;
@@ -249,8 +290,8 @@ void sort_dict(const string &dict, vector<vector<string>> &words)
 
 	while (getline(ifs, line))
 	{
-		words[line.length() - 1].push_back(line);
+		words[line.length()-1].push_back(line);
 	}
-	reverse(words.begin(), words.end());
+	// reverse(words.begin(), words.end());
 }
 
