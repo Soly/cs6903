@@ -1,8 +1,22 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <map>
+#include <set>
+using namespace std;
+
 vector<int> encode(const string &s);
 vector<int> encode(const vector<int> &s);
 vector<int> encode(vector<int>::iterator start, vector<int>::iterator end);
+void index(const string &path, set<string> &dict);
+
 
 int main() {
+    /*
+    set<string> dict;
+    index("english_words.txt", dict);
+
     map<vector<int>, vector<string> > encodings;
     for(auto i = dict.begin(); i != dict.end(); i++) {
         vector<int> e = encode(*i);
@@ -27,6 +41,7 @@ int main() {
       cout << endl;
       }
     */
+    return 0;
 }
 
 
@@ -78,4 +93,15 @@ vector<int> encode(vector<int>::iterator start, vector<int>::iterator end)
         else encoding.push_back(seen[*i]);
     }
     return encoding;
+}
+
+void index(const string &path, set<string> &dict)
+{
+    ifstream ifs(path);
+    if(!ifs) {
+        cerr << "Error opening " << path << endl;
+        exit(1);
+    }
+    string line;
+    while(getline(ifs, line)) dict.insert(line);
 }
