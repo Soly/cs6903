@@ -22,6 +22,7 @@ string decrypt(vector<int> &ct, map<char, vector<int>> &key);
 void delimit_ciphertext(string &ct, vector<int> &ct_nums);
 void index_dict(const string &path, set<string> &dict);
 void print_freqs(const vector<int> &cipher_text);
+void sort_dict(vector<vector<string>> &words, string dict);
 
 const vector<string> plaintexts = {
     "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping "
@@ -71,6 +72,11 @@ int main()
 
     index_dict("english_words.txt", dict);
     cout << "There are " << dict.size() << " words in the dictionary" << endl;
+    
+    // sort_dict test code
+    //vector<vector<string>> words(28);
+	//string dict = "english_words.txt";
+	//sort_dict(words, dict);
 
     // message = plaintexts[0];
     // encrypt(message, cipher_text, key);
@@ -191,5 +197,17 @@ void print_freqs(const vector<int> &cipher_text)
     }
     sort(freqs.begin(), freqs.end(), [](pair<int,int> x, pair<int, int> y){return x.second > y.second;});
     for(int i = 0; i < freqs.size(); i++) cout << freqs[i].first << ": " << freqs[i].second << endl;
+}
+
+void sort_dict(vector<vector<string>> &words, string dict)
+{
+	ifstream ifs(dict);
+	string line;
+	
+	while (getline(ifs, line))
+	{
+		words[line.length() - 1].push_back(line);
+	}
+	reverse(words.begin(), words.end());
 }
 
