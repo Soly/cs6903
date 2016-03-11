@@ -22,7 +22,7 @@ string decrypt(vector<int> &ct, map<char, vector<int>> &key);
 void delimit_ciphertext(string &ct, vector<int> &ct_nums);
 void index_dict(const string &path, set<string> &dict);
 void print_freqs(const vector<int> &cipher_text);
-void sort_dict(vector<vector<string>> &words, string dict);
+void sort_dict(const string &dict, vector<vector<string>> &words);
 
 const vector<string> plaintexts = {
     "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping "
@@ -66,17 +66,28 @@ int main()
     vector<int> cipher_text;
     map<char, vector<int>> key;
     set<string> dict;
+    vector<vector<string>> words;
 
     srand(time(NULL));
     create_key(key);
 
     index_dict("english_words.txt", dict);
     cout << "There are " << dict.size() << " words in the dictionary" << endl;
-    
+    sort_dict("english_words.txt", words);
+
+    vector<Trie> tries(words.size());
+    for(int i = 0; i < tries.size(); i++) {
+        for(int j = 0; j < words[i].size(); j++) {
+            tries[i].addWord(words[i][j]);
+        }
+    }
+
+
+
     // sort_dict test code
     //vector<vector<string>> words(28);
-	//string dict = "english_words.txt";
-	//sort_dict(words, dict);
+    //string dict = "english_words.txt";
+    //sort_dict(words, dict);
 
     // message = plaintexts[0];
     // encrypt(message, cipher_text, key);
@@ -199,11 +210,11 @@ void print_freqs(const vector<int> &cipher_text)
     for(int i = 0; i < freqs.size(); i++) cout << freqs[i].first << ": " << freqs[i].second << endl;
 }
 
-void sort_dict(vector<vector<string>> &words, string dict)
+void sort_dict(const string &dict, vector<vector<string>> &words)
 {
 	ifstream ifs(dict);
 	string line;
-	
+
 	while (getline(ifs, line))
 	{
 		words[line.length() - 1].push_back(line);

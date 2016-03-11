@@ -6,7 +6,7 @@ using namespace std;
 class Node {
 public:
     Node() { mContent = ' '; mMarker = false; }
-    ~Node() { for(Node* n : children) delete n; }
+    ~Node() { for(Node* n : mChildren) delete n; }
     char content() { return mContent; }
     void setContent(char c) { mContent = c; }
     bool wordMarker() { return mMarker; }
