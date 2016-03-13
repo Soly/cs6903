@@ -15,6 +15,10 @@
 #include "trie.cpp"
 using namespace std;
 
+class Ciphertext;
+class Dictionary;
+class Key;
+
 void sort_ciphertext(string ct, vector<vector<pair<string, int>>> &ct_sorted);
 void create_key(map<char, vector<int>> &key);
 void print_key(map<char, vector<int>> &key);
@@ -28,6 +32,9 @@ void sort_dict(const string &dict, vector<vector<string>> &words);
 template<typename T>
 void print_vec(const vector<T> &vec);
 void string_to_vector(string ct_string, vector<int> &ct_vec);
+string brute(Ciphertext& ct, Dictionary& dict, Key& key);
+string bruter(Ciphertext& ct, Dictionary& dict, Key& key, int index);
+
 
 const vector<string> plaintexts = {
     "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping "
@@ -81,10 +88,12 @@ public:
             words.push_back(make_pair(word, pos++));
         }
 
+        // sort in ascending order of word length
         sort(words.begin(), words.end(),
-             [](const pair<vector<int>, int> &a, const pair<vector<int>, int> &b) -> bool
-             { return a.first.size() < b.first.size(); });
-    }
+            [](const pair<vector<int>, int> &a, const pair<vector<int>, int> &b) -> bool
+            { return a.first.size() < b.first.size(); });
+
+     }
 
     size_t size() { return length; }
     const vector<int>& operator[](size_t i) const { return words[i].first; }
@@ -116,7 +125,9 @@ public:
 private:
     size_t length;
     vector<pair<vector<int>, int>> words;
+    static const int by_amount[29];
 };
+
 
 // this is very space inefficient as it stores 3 copies of the dict.
 // a better implementation would allocate space once and use pointers
@@ -155,10 +166,11 @@ public:
 
     // returns subarray of strings that fit criteria,
     // empty array if nonexistant
-    vector<string> filter(string q, int len) {
-        if(len > sorted.size() || len != q.size()) return sorted[0];
-        vector<string> ret(sorted[len].size());
-        auto it = copy_if(sorted[len].begin(), sorted[len].end(), ret.begin(),
+    // CALLER MUST FREE
+    vector<string>* filter(string q, int len) {
+        if(len > sorted.size() || len != q.size()) return NULL;
+        vector<string>* ret = new vector<string>(sorted[len].size());
+        auto it = copy_if(sorted[len].begin(), sorted[len].end(), ret->begin(),
                 [q](string m) {
                     for(int i = 0; i < q.size(); i++) {
                         if(q[i] == ' ') continue;
@@ -166,8 +178,25 @@ public:
                     }
                     return true;
                 });
-        ret.resize(distance(ret.begin(), it));
+        ret->resize(distance(ret->begin(), it));
+        if(ret->size() == 0) {
+            delete ret;
+            return NULL;
+        }
         return ret;
+    }
+
+    // prioritizes certain words by putting them at the front of their appropriate sublist
+    // good for known / chosen plaintexts.
+    // would be more efficient with lists, but lists make sorting harder.
+    void prime(const string& word) {
+        int size = word.size();
+        if(size > sorted.size()) return;
+        auto it = find(sorted[size].begin(), sorted[size].end(), word);
+        if(it == sorted[size].end()) return;
+        string found = *it;
+        sorted[size].erase(it);
+        sorted[size].insert(sorted[size].begin(), found);
     }
 
 private:
@@ -209,6 +238,16 @@ public:
         return false;
     }
 
+    bool insert(string s, vector<int> v) {
+        for(int i = 0; i < s.size(); i++) {
+            if(!insert(s[i], v[i])) {
+                remove(vector<int>(v.begin(), v.begin()+i));
+                return false;
+            }
+        }
+        return true;
+    }
+
     // returns vector of values corresponding to c
     vector<int> get_values(char c) {
         if(c < 'a' || c > 'z') return vector<int>();
@@ -221,6 +260,7 @@ public:
     char get_letter(int n) {
         if(n < 0 || n > 102) return 0;
         int index = find(key.begin(), key.end(), n) - key.begin();
+        if (index > 25) return 0;
         for(int i = 0; i < 26; i++) {
             if(i >= offsets[index] && i < 102 && i < offsets[index + 1]) return letters[i];
         }
@@ -250,52 +290,74 @@ public:
         }
     }
 
+    Ciphertext encrypt(string s) {
+        string ct;
+        for(int i = 0; i < s.size(); i++) {
+            if(isspace(s[i])) {
+                ct += ' ';
+                continue;
+            }
+            int index = s[i] - 'a';
+            int l = freqs[index];
+            ct += to_string(key[(i % l) + offsets[index]]);
+            if(i < s.size() - 1) ct += ",";
+        }
+        return Ciphertext(ct);
+    }
+
+    bool complete() {
+        return find(key.begin(), key.end(), -1) == key.end();
+    }
 private:
     vector<int> key;
-    const int offsets[26]  = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
-    const int freqs[26] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
-    const string letters = "abcdefghijklmnopqrstuvwxyz";
+    static const int offsets[26]; //  = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
+    static const int freqs[26]; // = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
+    static const string letters; // = "abcdefghijklmnopqrstuvwxyz";
 };
+
+const int Key::offsets[26] = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
+const int Key::freqs[26] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
+const string Key::letters = "abcdefghijklmnopqrstuvwxyz";
 
 int main()
 {
-    string cipher_text;
-    cout << "Enter ciphertext: " << endl;
-    getline(cin, cipher_text);
+    // string cipher_text;
+    // cout << "Enter ciphertext: " << endl;
+    // getline(cin, cipher_text);
 
-    Ciphertext ct = Ciphertext(cipher_text);
+    // Ciphertext ct = Ciphertext(cipher_text);
 
     Dictionary dict = Dictionary("english_words.txt");
 
-    Key k = Key();
-
-    cout << "everything went better than expected." << endl;
-    /*
-    string guess;
-    vector<int> first_word = ct[0];
-    int curr_size = first_word.size();
-    vector<string> words = dict.get_words(curr_size);
-    for(int j = 0; j < words.size(); j++) {
-        guess += words[j]
-        for(int k = 0; k < words[j].size(); k++) {
-            if(!k.insert(first_word[k])) {
-                k.remove(first_word);
-                guess.erase(guess.find(first_word), first_word.size());
-                break;
-            }
-        }
-
-        for(k = 1; k < ct.size(); k++) {
-            string match;
-            for(l = 0; l < ct[k].size(); l++) {
-                char m;
-                if(m = k.get_letter[l]) match += m;
-                else match += " ";
-            }
-        }
+    for(int i = 0; i < plaintexts.size(); i++) {
+        stringstream text(plaintexts[i]);
+        string word;
+        while(text >> word) dict.prime(word);
     }
-    */
 
+    Key ekey = Key();
+
+    string message = plaintexts[0];
+
+    vector<string> m;
+    stringstream ss(message);
+    string word;
+    while(ss >> word) m.push_back(word);
+    sort(m.begin(), m.end(), [](const string &a, const string& b) -> bool { return a.size() > b.size(); });
+
+
+    ekey.randomize();
+    Ciphertext ct = ekey.encrypt(message);
+    Key key = Key();
+
+    string dec = brute(ct, dict, key);
+
+    for(auto i : m) cout << i << ' ';
+
+    cout << dec << endl;
+    ekey.print();
+    key.print();
+    cout << "everything went better than expected." << endl;
 
     /*
       auto curr_len = ct_sorted.begin();
@@ -347,6 +409,51 @@ int main()
       print_ciphertext(cipher_text);
     */
 
+}
+
+string brute(Ciphertext& ct, Dictionary& dict, Key& key) {
+    return bruter(ct, dict, key, ct.size() - 1);
+}
+
+string bruter(Ciphertext& ct, Dictionary& dict, Key& key, int index) {
+    vector<int> word = ct[index];
+    int size = word.size();
+    string guess;
+    string match;
+    bool found = false;
+    for(int i = 0; i < size; i++) {
+        char c;
+        if(c = key.get_letter(word[i])) match += c;
+        else match += ' ';
+    }
+    vector<string>* matches = dict.filter(match, size);
+    if(matches) {
+        for(int i = 0; i < matches->size(); i++) {
+            Key nkey = key;
+            if(nkey.insert(matches->at(i), word)) {
+                guess = matches->at(i);
+            }
+            else continue;
+
+            string r;
+            if(index > 0) {
+                r = bruter(ct, dict, nkey, index - 1);
+                if(r == "") continue;
+                else {
+                    guess += ' ' + r;
+                    key = Key(nkey);
+                    found = true;
+                    break;
+                }
+            }
+        }
+        delete matches;
+        if(!found) guess = "";
+    }
+    else if(key.complete() && match.find(' ') == string::npos) guess = match;
+    else guess = "";
+
+    return guess;
 }
 
 template<typename T>
