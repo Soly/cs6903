@@ -122,6 +122,20 @@ public:
         }
     }
 
+    void reorder_guess(string& guess) {
+        vector<pair<string, int>> v;
+        stringstream ss(guess);
+        string word;
+        int i = words.size() - 1;
+        while(ss >> word) v.push_back(make_pair(word, words[i--].second));
+        sort(v.begin(), v.end(),
+             [](const pair<string, int>& a, const pair<string, int>& b) -> bool
+             { return a.second < b.second; });
+        stringstream out;
+        for(int i = 0; i < v.size(); i++) out << v[i].first << ' ';
+        guess = out.str();
+    }
+
 private:
     size_t length;
     vector<pair<vector<int>, int>> words;
@@ -230,7 +244,7 @@ public:
         int index = c - 'a';
         int limit = index < 25 ? offsets[index + 1] : 103;
         for(int i = offsets[index]; i < limit; i++) {
-            if(key[i] < 0) {
+            if(key[i] < 0 || key[i] == n) {
                 key[i] = n;
                 return true;
             }
@@ -260,9 +274,9 @@ public:
     char get_letter(int n) {
         if(n < 0 || n > 102) return 0;
         int index = find(key.begin(), key.end(), n) - key.begin();
-        if (index > 25) return 0;
+        if (index > 102) return 0;
         for(int i = 0; i < 26; i++) {
-            if(i >= offsets[index] && i < 102 && i < offsets[index + 1]) return letters[i];
+            if(index >= offsets[i] && i < 25 && index < offsets[i + 1]) return letters[i];
         }
         return 'z';
     }
@@ -336,28 +350,33 @@ int main()
     }
 
     Key ekey = Key();
-
     string message = plaintexts[0];
-
-    vector<string> m;
-    stringstream ss(message);
-    string word;
-    while(ss >> word) m.push_back(word);
-    sort(m.begin(), m.end(), [](const string &a, const string& b) -> bool { return a.size() > b.size(); });
-
-
     ekey.randomize();
-    Ciphertext ct = ekey.encrypt(message);
-    Key key = Key();
 
+    cout << endl << "Message is: " << endl << message << endl;
+    cout << endl << "Key is: " << endl;
+    ekey.print();
+
+    Ciphertext ct = ekey.encrypt(message);
+
+    cout << endl << "Ciphertext is: " << endl;
+    ct.print_in_place();
+
+    cout << endl << "----------------------------------------" << endl;
+
+    Key key = Key();
     string dec = brute(ct, dict, key);
 
-    for(auto i : m) cout << i << ' ';
+    ct.reorder_guess(dec);
 
+    cout << "Plaintext guess is: " << endl;
     cout << dec << endl;
-    ekey.print();
+
+    cout << endl << "Key guess is: " << endl;
     key.print();
-    cout << "everything went better than expected." << endl;
+    if(!key.complete()) cout << "Note: Key is not complete." << endl;
+
+    cout << endl << "everything went better than expected." << endl;
 
     /*
       auto curr_len = ct_sorted.begin();
@@ -450,7 +469,7 @@ string bruter(Ciphertext& ct, Dictionary& dict, Key& key, int index) {
         delete matches;
         if(!found) guess = "";
     }
-    else if(key.complete() && match.find(' ') == string::npos) guess = match;
+    else if(index == 0 && match.find(' ') == string::npos) guess = match;
     else guess = "";
 
     return guess;
