@@ -377,57 +377,7 @@ int main()
     if(!key.complete()) cout << "Note: Key is not complete." << endl;
 
     cout << endl << "everything went better than expected." << endl;
-
-    /*
-      auto curr_len = ct_sorted.begin();
-      while(curr_len->size() == 0) curr_len++;
-      vector<int> curr_word;
-      string_to_vector((curr_len->begin())->first, curr_word);
-      auto curr_guess = words[curr_word.size()].begin();
-
-      static int freqs[] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
-      static int offsets[] = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
-      bool sat = false;
-      for(int i = 0; i < curr_guess->size(); i++) {
-      char c = (*curr_guess)[i];
-      int index = c - 97;
-      int off = offsets[index];
-      while(key_guess[off] >= 0 && off < 103 && off < offsets[index+1]) off++;
-      if(key_guess[off] >= 0) {
-      sat = true;
-      break;
-      }
-      // only inserts into the key if that ciphertext number hasn't been
-      // used already e.g. '23,23,23' only will put one '23' in the key
-      for (auto j : key_guess)
-      if (j == curr_word[i]) continue;
-      key_guess[off] = curr_word[i];
-      }
-
-      print_vec(curr_word);
-      cout << endl;
-      char c = 'a';
-      int o = 1;
-      for(int i = 0; i < key_guess.size(); i++) {
-      if(i == offsets[o]) o++, c++;
-      cout << c << ": " << key_guess[i] << endl;
-      }
-
-      cout << endl;
-    */
-    /*
-     * sort_dict test code
-     string string_dict = "english_words.txt";
-     sort_dict(string_dict, words);
-     for (auto i: words) for (auto j : i) cout << j << endl;
-    */
-
-    /*message = plaintexts[0];
-      encrypt(message, cipher_text, key);
-      cout << decrypt(cipher_text, key) << endl;
-      print_ciphertext(cipher_text);
-    */
-
+    return 0;
 }
 
 string brute(Ciphertext& ct, Dictionary& dict, Key& key) {
