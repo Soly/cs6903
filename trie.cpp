@@ -28,6 +28,7 @@ public:
     void addWord(string s);
     bool searchWord(string s);
     void deleteWord(string s);
+    Node* getNodeAt(const string& s);
 private:
     Node* root;
 };
@@ -95,4 +96,13 @@ bool Trie::searchWord(string s)
             return false;
     }
     return false;
+}
+
+Node* Trie::getNodeAt(const string& s) {
+    Node* current = root;
+    for (int i = 0; i < s.length(); i++) {
+        Node* tmp = current->findChild(s[i]);
+        current = tmp;
+    }
+    return current;
 }
