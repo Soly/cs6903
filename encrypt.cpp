@@ -25,7 +25,8 @@ void delimit_ciphertext(string &ct, vector<int> &ct_nums);
 void index_dict(const string &path, set<string> &dict);
 void print_freqs(const vector<int> &cipher_text);
 void sort_dict(const string &dict, vector<vector<string>> &words);
-void print_vec(const vector<int> &vec);
+template<typename T>
+void print_vec(const vector<T> &vec);
 void string_to_vector(string ct_string, vector<int> &ct_vec);
 
 const vector<string> plaintexts = {
@@ -66,55 +67,55 @@ const vector<string> plaintexts = {
 
 class Ciphertext{
 public:
-  Ciphertext(string &ct) {
-    stringstream ctss(ct);
-    string current;
-    length = 0;
-    int pos = 0;
-    while(ctss >> current) {
-      length++;
-      stringstream ss(current);
-      string num;
-      vector<int> word;
-      while(getline(ss, num, ',')) word.push_back(stoi(num));
-      words.push_back(make_pair(word, pos++));
+    Ciphertext(string &ct) {
+        stringstream ctss(ct);
+        string current;
+        length = 0;
+        int pos = 0;
+        while(ctss >> current) {
+            length++;
+            stringstream ss(current);
+            string num;
+            vector<int> word;
+            while(getline(ss, num, ',')) word.push_back(stoi(num));
+            words.push_back(make_pair(word, pos++));
+        }
+
+        sort(words.begin(), words.end(),
+             [](const pair<vector<int>, int> &a, const pair<vector<int>, int> &b) -> bool
+             { return a.first.size() < b.first.size(); });
     }
 
-    sort(words.begin(), words.end(),
-         [](const pair<vector<int>, int> &a, const pair<vector<int>, int> &b) -> bool
-         { return a.first.size() < b.first.size(); });
-  }
-
-  size_t size() { return length; }
-  const vector<int>& operator[](size_t i) const { return words[i].first; }
-  void print() {
-    for(int i = 0; i < words.size(); i++) {
-      for(int j = 0; j < words[i].first.size(); j++) {
-        cout << words[i].first[j];
-        if(j < words[i].first.size() - 1) cout << ',';
-      }
-      if(i < words.size() - 1) cout << ' ';
-      else cout << '\n';
+    size_t size() { return length; }
+    const vector<int>& operator[](size_t i) const { return words[i].first; }
+    void print() {
+        for(int i = 0; i < words.size(); i++) {
+            for(int j = 0; j < words[i].first.size(); j++) {
+                cout << words[i].first[j];
+                if(j < words[i].first.size() - 1) cout << ',';
+            }
+            if(i < words.size() - 1) cout << ' ';
+            else cout << '\n';
+        }
     }
-  }
-  void print_in_place() {
-    vector<pair<vector<int>, int>> temp = words;
-    sort(temp.begin(), temp.end(),
-         [](const pair<vector<int>, int> &a, const pair<vector<int>, int> &b) -> bool
-         { return a.second < b.second; });
-    for(int i = 0; i < temp.size(); i++) {
-      for(int j = 0; j < temp[i].first.size(); j++) {
-        cout << temp[i].first[j];
-        if(j < temp[i].first.size() - 1) cout << ',';
-      }
-      if(i < temp.size() - 1) cout << ' ';
-      else cout << '\n';
+    void print_in_place() {
+        vector<pair<vector<int>, int>> temp = words;
+        sort(temp.begin(), temp.end(),
+             [](const pair<vector<int>, int> &a, const pair<vector<int>, int> &b) -> bool
+             { return a.second < b.second; });
+        for(int i = 0; i < temp.size(); i++) {
+            for(int j = 0; j < temp[i].first.size(); j++) {
+                cout << temp[i].first[j];
+                if(j < temp[i].first.size() - 1) cout << ',';
+            }
+            if(i < temp.size() - 1) cout << ' ';
+            else cout << '\n';
+        }
     }
-  }
 
 private:
-  size_t length;
-  vector<pair<vector<int>, int>> words;
+    size_t length;
+    vector<pair<vector<int>, int>> words;
 };
 
 // this is very space inefficient as it stores 3 copies of the dict.
@@ -122,241 +123,260 @@ private:
 // for the 3 different containers
 class Dictionary {
 public:
-  Dictionary(const string& path) {
-    sorted = vector<vector<string>>(29);
-    tries = vector<Trie>(29);
-    ifstream ifs(path);
-    string line;
-    if(ifs) {
-      while(getline(ifs, line)) {
-        all.insert(line);
-        if(line.size() > sorted.size()) {
-          sorted.resize(line.size() + 1);
-          tries.resize(line.size() + 1);
+    Dictionary(const string& path) {
+        sorted = vector<vector<string>>(29);
+        tries = vector<Trie>(29);
+        ifstream ifs(path);
+        string line;
+        if(ifs) {
+            while(getline(ifs, line)) {
+                all.insert(line);
+                if(line.size() > sorted.size()) {
+                    sorted.resize(line.size() + 1);
+                    tries.resize(line.size() + 1);
+                }
+                sorted[line.size()].push_back(line);
+                tries[line.size()].addWord(line);
+            }
         }
-        sorted[line.size()].push_back(line);
-        tries[line.size()].addWord(line);
-      }
     }
-  }
 
-  bool has(const string& word) { return all.find(word) != all.end(); }
+    bool has(const string& word) { return all.find(word) != all.end(); }
 
-  bool next_can_be(const string& prefix, char c, int len) { return tries[len].getNodeAt(prefix)->findChild(c) != NULL; }
+    bool next_can_be(const string& prefix, char c, int len) { return tries[len].getNodeAt(prefix)->findChild(c) != NULL; }
 
-  size_t size() { return all.size(); }
+    size_t size() { return all.size(); }
+
+    // returns vector containing words of size size
+    const vector<string>& get_words(int size) {
+        if(size > sorted.size()) return sorted[0];
+        return sorted[size];
+    }
+
+    // returns subarray of strings that fit criteria,
+    // empty array if nonexistant
+    vector<string> filter(string q, int len) {
+        if(len > sorted.size() || len != q.size()) return sorted[0];
+        vector<string> ret(sorted[len].size());
+        auto it = copy_if(sorted[len].begin(), sorted[len].end(), ret.begin(),
+                [q](string m) {
+                    for(int i = 0; i < q.size(); i++) {
+                        if(q[i] == ' ') continue;
+                        if(q[i] != m[i]) return false;
+                    }
+                    return true;
+                });
+        ret.resize(distance(ret.begin(), it));
+        return ret;
+    }
+
 private:
-  set<string> all;
-  vector<Trie> tries;
-  vector<vector<string>> sorted;
+    set<string> all;
+    vector<Trie> tries;
+    vector<vector<string>> sorted;
 };
 
 class Key {
 public:
-  Key() : key(103, -1) {}
-  Key(vector<int> v) : key(v) { if(key.size() < 103) key.resize(103,-1); }
+    Key() : key(103, -1) {}
+    Key(vector<int> v) : key(v) { if(key.size() < 103) key.resize(103,-1); }
 
-  void randomize() {
-    vector<int> rand_nums;
-    for (int i = 0; i < 103; i++) rand_nums.push_back(i);
-    random_shuffle(rand_nums.begin(), rand_nums.end());
-    key = rand_nums;
-  }
-
-  void clear() {
-    key = vector<int>(102, -1);
-  }
-
-  // inserts guess number at index representing letter c
-  // returns true on success, false on failure
-  // fails if no more room for that letter
-  bool insert(char c, int n) {
-    if(c < 'a' || c > 'z') return false;
-    if(n < 0 || n > 102) return false;
-    int index = c - 'a';
-    int limit = index < 25 ? offsets[index + 1] : 103;
-    for(int i = offsets[index]; i < limit; i++) {
-      if(key[i] < 0) {
-        key[i] = n;
-        return true;
-      }
+    void randomize() {
+        vector<int> rand_nums;
+        for (int i = 0; i < 103; i++) rand_nums.push_back(i);
+        random_shuffle(rand_nums.begin(), rand_nums.end());
+        key = rand_nums;
     }
-    return false;
-  }
 
-  // returns vector of values corresponding to c
-  vector<int> get_values(char c) {
-    if(c < 'a' || c > 'z') return vector<int>();
-    int index = c - 'a';
-    int start = offsets[index];
-    int end = index < 25 ? offsets[index + 1] : 103;
-    return vector<int>(key.begin() + start, key.begin() + end);
-  }
-
-  char get_letter(int n) {
-    if(n < 0 || n > 102) return 0;
-    int index = find(key.begin(), key.end(), n) - key.begin();
-    for(int i = 0; i < 26; i++) {
-      if(i >= offsets[index] && i < 102 && i < offsets[index + 1]) return letters[i];
+    void clear() {
+        key = vector<int>(102, -1);
     }
-    return 'z';
-  }
 
-  // removes n from key vector
-  void remove(int n) {
-    auto it = find(key.begin(), key.end(), n);
-    if(it != key.end()) *it = -1;
-  }
-
-  // batch remove
-  void remove(vector<int> v) {
-    for(int i = 0; i < v.size(); i++) remove(v[i]);
-  }
-
-  void print() {
-    for(int i = 0; i < 26; i++) {
-      int limit = i < 25 ? offsets[i+1] : 103;
-      cout << letters[i] << ": ";
-      for(int j = offsets[i]; j < limit; j++) {
-        cout << key[j];
-        if(j < limit - 1) cout << ',';
-        else cout << endl;
-      }
+    // inserts guess number at index representing letter c
+    // returns true on success, false on failure
+    // fails if no more room for that letter
+    bool insert(char c, int n) {
+        if(c < 'a' || c > 'z') return false;
+        if(n < 0 || n > 102) return false;
+        int index = c - 'a';
+        int limit = index < 25 ? offsets[index + 1] : 103;
+        for(int i = offsets[index]; i < limit; i++) {
+            if(key[i] < 0) {
+                key[i] = n;
+                return true;
+            }
+        }
+        return false;
     }
-  }
+
+    // returns vector of values corresponding to c
+    vector<int> get_values(char c) {
+        if(c < 'a' || c > 'z') return vector<int>();
+        int index = c - 'a';
+        int start = offsets[index];
+        int end = index < 25 ? offsets[index + 1] : 103;
+        return vector<int>(key.begin() + start, key.begin() + end);
+    }
+
+    char get_letter(int n) {
+        if(n < 0 || n > 102) return 0;
+        int index = find(key.begin(), key.end(), n) - key.begin();
+        for(int i = 0; i < 26; i++) {
+            if(i >= offsets[index] && i < 102 && i < offsets[index + 1]) return letters[i];
+        }
+        return 'z';
+    }
+
+    // removes n from key vector
+    void remove(int n) {
+        auto it = find(key.begin(), key.end(), n);
+        if(it != key.end()) *it = -1;
+    }
+
+    // batch remove
+    void remove(const vector<int>& v) {
+        for(int i = 0; i < v.size(); i++) remove(v[i]);
+    }
+
+    void print() {
+        for(int i = 0; i < 26; i++) {
+            int limit = i < 25 ? offsets[i+1] : 103;
+            cout << letters[i] << ": ";
+            for(int j = offsets[i]; j < limit; j++) {
+                cout << key[j];
+                if(j < limit - 1) cout << ',';
+                else cout << endl;
+            }
+        }
+    }
 
 private:
-  vector<int> key;
-  const int offsets[26]  = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
-  const int freqs[26] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
-  const string letters = "abcdefghijklmnopqrstuvwxyz";
+    vector<int> key;
+    const int offsets[26]  = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
+    const int freqs[26] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
+    const string letters = "abcdefghijklmnopqrstuvwxyz";
 };
 
 int main()
 {
-    string message;
-    vector<int> cipher_text;
-    map<char, vector<int>> key;
-    // set<string> dict;
-    vector<vector<string>> words(29);
-
-    srand(time(NULL));
-    create_key(key);
-
-    vector<int> key_guess(103, -1);
-
-
-    // index_dict("english_words.txt", dict);
-    // cout << "There are " << dict.size() << " words in the dictionary" << endl;
-    // sort_dict("english_words.txt", words);
-
-    vector<vector<pair<string, int>>> ct_sorted(28);
-    string cipher_text_2;
+    string cipher_text;
     cout << "Enter ciphertext: " << endl;
-    getline(cin, cipher_text_2);
+    getline(cin, cipher_text);
 
-    Ciphertext ct = Ciphertext(cipher_text_2);
-    ct.print();
-    ct.print_in_place();
+    Ciphertext ct = Ciphertext(cipher_text);
 
     Dictionary dict = Dictionary("english_words.txt");
 
-
     Key k = Key();
-    k.randomize();
-    k.print();
 
     cout << "everything went better than expected." << endl;
-
-    
-
     /*
-    sort_ciphertext(cipher_text_2, ct_sorted);
+    string guess;
+    vector<int> first_word = ct[0];
+    int curr_size = first_word.size();
+    vector<string> words = dict.get_words(curr_size);
+    for(int j = 0; j < words.size(); j++) {
+        guess += words[j]
+        for(int k = 0; k < words[j].size(); k++) {
+            if(!k.insert(first_word[k])) {
+                k.remove(first_word);
+                guess.erase(guess.find(first_word), first_word.size());
+                break;
+            }
+        }
 
-    vector<Trie> tries(words.size());
-    for(int i = 0; i < tries.size(); i++) {
-        for(int j = 0; j < words[i].size(); j++) {
-            tries[i].addWord(words[i][j]);
+        for(k = 1; k < ct.size(); k++) {
+            string match;
+            for(l = 0; l < ct[k].size(); l++) {
+                char m;
+                if(m = k.get_letter[l]) match += m;
+                else match += " ";
+            }
         }
     }
+    */
 
-    auto curr_len = ct_sorted.begin();
-    while(curr_len->size() == 0) curr_len++;
-    vector<int> curr_word;
-    string_to_vector((curr_len->begin())->first, curr_word);
-    auto curr_guess = words[curr_word.size()].begin();
 
-    static int freqs[] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
-    static int offsets[] = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
-    bool sat = false;
-    for(int i = 0; i < curr_guess->size(); i++) {
+    /*
+      auto curr_len = ct_sorted.begin();
+      while(curr_len->size() == 0) curr_len++;
+      vector<int> curr_word;
+      string_to_vector((curr_len->begin())->first, curr_word);
+      auto curr_guess = words[curr_word.size()].begin();
+
+      static int freqs[] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
+      static int offsets[] = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 54, 61, 69, 71, 72, 78, 84, 93, 96, 97, 99, 100, 102};
+      bool sat = false;
+      for(int i = 0; i < curr_guess->size(); i++) {
       char c = (*curr_guess)[i];
       int index = c - 97;
       int off = offsets[index];
       while(key_guess[off] >= 0 && off < 103 && off < offsets[index+1]) off++;
       if(key_guess[off] >= 0) {
-        sat = true;
-        break;
+      sat = true;
+      break;
       }
       // only inserts into the key if that ciphertext number hasn't been
       // used already e.g. '23,23,23' only will put one '23' in the key
       for (auto j : key_guess)
-        if (j == curr_word[i]) continue;
+      if (j == curr_word[i]) continue;
       key_guess[off] = curr_word[i];
-    }
+      }
 
-    print_vec(curr_word);
-    cout << endl;
-    char c = 'a';
-    int o = 1;
-    for(int i = 0; i < key_guess.size(); i++) {
+      print_vec(curr_word);
+      cout << endl;
+      char c = 'a';
+      int o = 1;
+      for(int i = 0; i < key_guess.size(); i++) {
       if(i == offsets[o]) o++, c++;
       cout << c << ": " << key_guess[i] << endl;
-    }
+      }
 
-    cout << endl;
+      cout << endl;
     */
     /*
      * sort_dict test code
-    string string_dict = "english_words.txt";
-    sort_dict(string_dict, words);
-    for (auto i: words) for (auto j : i) cout << j << endl;
+     string string_dict = "english_words.txt";
+     sort_dict(string_dict, words);
+     for (auto i: words) for (auto j : i) cout << j << endl;
     */
 
-    
     /*message = plaintexts[0];
-    encrypt(message, cipher_text, key);
-    cout << decrypt(cipher_text, key) << endl;
-    print_ciphertext(cipher_text);
+      encrypt(message, cipher_text, key);
+      cout << decrypt(cipher_text, key) << endl;
+      print_ciphertext(cipher_text);
     */
 
 }
 
-void print_vec(const vector<int> &vec)
+template<typename T>
+void print_vec(const vector<T> &vec)
 {
-  for(auto i = vec.begin(); i != vec.end(); i++) cout << *i << ',';
+    for(auto i = vec.begin(); i != vec.end(); i++)
+        cout << *i << ',';
+    cout << endl;
 }
 
 void string_to_vector(string ct_string, vector<int> &ct_vec) {
-	string letter;
-	stringstream ss(ct_string);
+    string letter;
+    stringstream ss(ct_string);
 
-	while (getline(ss, letter, ',')) {
-		ct_vec.push_back(stoi(letter));
-	}
+    while (getline(ss, letter, ',')) {
+        ct_vec.push_back(stoi(letter));
+    }
 }
 
 void sort_ciphertext(string ct, vector<vector<pair<string, int>>> &ct_sorted)
 {
-	int line_counter = 0;
-	stringstream ss(ct);
-	string line;
-	while (getline(ss, line, ' ')) {
-		pair<string, int> word(line, line_counter);
-		ct_sorted[count(line.begin(), line.end(), ',') + 1].push_back(word);
-		line_counter++;
-	}
-	reverse(ct_sorted.begin(), ct_sorted.end());
+    int line_counter = 0;
+    stringstream ss(ct);
+    string line;
+    while (getline(ss, line, ' ')) {
+        pair<string, int> word(line, line_counter);
+        ct_sorted[count(line.begin(), line.end(), ',') + 1].push_back(word);
+        line_counter++;
+    }
+    reverse(ct_sorted.begin(), ct_sorted.end());
 }
 
 void create_key(map<char, vector<int>> &key)
@@ -477,13 +497,13 @@ void print_freqs(const vector<int> &cipher_text)
 
 void sort_dict(const string &dict, vector<vector<string>> &words)
 {
-	ifstream ifs(dict);
-	string line;
+    ifstream ifs(dict);
+    string line;
 
-	while (getline(ifs, line))
-	{
-		words[line.length()].push_back(line);
-	}
-	// reverse(words.begin(), words.end());
+    while (getline(ifs, line))
+    {
+        words[line.length()].push_back(line);
+    }
+    // reverse(words.begin(), words.end());
 }
 
