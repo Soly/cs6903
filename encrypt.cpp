@@ -34,7 +34,7 @@ void print_vec(const vector<T> &vec);
 void string_to_vector(string ct_string, vector<int> &ct_vec);
 string brute(Ciphertext& ct, Dictionary& dict, Key& key);
 string bruter(Ciphertext& ct, Dictionary& dict, Key& key, int index);
-
+int naive(string &ct);
 
 const vector<string> plaintexts = {
     "sconced pouch bogart lights coastal philip nonexplosive shriller outstripping "
@@ -342,13 +342,22 @@ const int Key::offsets[26] = {0, 8, 9, 12, 16, 29, 31, 33, 39, 46, 47, 48, 52, 5
 const int Key::freqs[26] = {8, 1, 3, 4, 13, 2, 2, 6, 7, 1, 1, 4, 2, 7, 8, 2, 1, 6, 6, 9, 3, 1, 2, 1, 2, 1};
 const string Key::letters = "abcdefghijklmnopqrstuvwxyz";
 
-int main()
+int main(int argc, char** argv)
 {
-    // string cipher_text;
-    // cout << "Enter ciphertext: " << endl;
-    // getline(cin, cipher_text);
+    if(argc < 2)
+        cout << "Specify option -n at cmdline to enable naive guessing" << endl << endl;
 
-    // Ciphertext ct = Ciphertext(cipher_text);
+    string cipher_text;
+    cout << "Enter ciphertext: " << endl;
+    getline(cin, cipher_text);
+
+    Ciphertext ct = Ciphertext(cipher_text);
+
+    int nguess = naive(cipher_text);
+    if(argc == 2 && string(argv[1]) == "-n") {
+        cout << "Naive guess is: " << endl;
+        cout << plaintexts[nguess] << endl << endl;
+    }
 
     Dictionary dict = Dictionary("english_words.txt");
     dict.randomize();
@@ -358,15 +367,17 @@ int main()
         while(text >> word) dict.prime(word);
     }
 
-    Key ekey = Key();
-    string message = plaintexts[3];
-    ekey.randomize();
+    // Key ekey = Key();
+    // string message = plaintexts[3];
+    // ekey.randomize();
 
-    cout << endl << "Message is: " << endl << message << endl;
-    cout << endl << "Key is: " << endl;
-    ekey.print();
+    // cout << endl << "Message is: " << endl << message << endl;
+    // cout << endl << "Key is: " << endl;
+    // ekey.print();
 
-    Ciphertext ct = ekey.encrypt(message);
+    // Ciphertext ct = ekey.encrypt(message);
+
+
 
     cout << endl << "Ciphertext is: " << endl;
     ct.print_in_place();
@@ -387,6 +398,31 @@ int main()
 
     cout << endl << "everything went better than expected." << endl;
     return 0;
+}
+
+// naively solves part1 by looking at the length of the first words
+int naive(string &ct) {
+    stringstream ss(ct);
+    string word;
+    vector<int> words;
+    int len = 0;
+    ss >> word;
+    stringstream sss(word);
+    string word2;
+    while(getline(sss, word2, ',')) len++;
+    switch(len) {
+    case 8:
+        return 0;
+    case 10:
+        return 1;
+    case 4:
+        return 2;
+    case 9:
+        return 3;
+    case 11:
+        return 4;
+    }
+    return -1;
 }
 
 string brute(Ciphertext& ct, Dictionary& dict, Key& key) {
