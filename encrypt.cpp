@@ -200,6 +200,15 @@ public:
         return ret;
     }
 
+    // randomizes order of strings within sublist
+    // might be better than alphabetical
+    // makes overall cryptanalysis less deterministic
+    void randomize() {
+        for(int i = 0; i < sorted.size(); i++) {
+            random_shuffle(sorted[i].begin(), sorted[i].end());
+        }
+    }
+
     // prioritizes certain words by putting them at the front of their appropriate sublist
     // good for known / chosen plaintexts.
     // would be more efficient with lists, but lists make sorting harder.
@@ -342,7 +351,7 @@ int main()
     // Ciphertext ct = Ciphertext(cipher_text);
 
     Dictionary dict = Dictionary("english_words.txt");
-
+    dict.randomize();
     for(int i = 0; i < plaintexts.size(); i++) {
         stringstream text(plaintexts[i]);
         string word;
@@ -350,7 +359,7 @@ int main()
     }
 
     Key ekey = Key();
-    string message = plaintexts[0];
+    string message = plaintexts[3];
     ekey.randomize();
 
     cout << endl << "Message is: " << endl << message << endl;
